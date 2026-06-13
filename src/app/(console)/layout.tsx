@@ -53,9 +53,9 @@ export default async function ConsoleLayout({
         <Link href="/" className="nav-i active">
           EVENTS
         </Link>
-        <span className="nav-i" style={{ opacity: 0.35, cursor: "default" }}>
-          ORDERS · T4
-        </span>
+        <Link href="/orders" className="nav-i">
+          ORDERS
+        </Link>
         <div className="side-foot">
           <div style={{ marginBottom: 8 }}>{row.display_name || user.email}</div>
           <form action="/auth/signout" method="post">

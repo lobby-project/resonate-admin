@@ -109,3 +109,14 @@ button{font-family:inherit; cursor:pointer;}
 /* 登录页 */
 .login-wrap{min-height:100dvh; display:flex; align-items:center; justify-content:center;}
 .login-card{width:380px; border:1px solid var(--border); border-radius:12px; padding:32px; background:var(--panel);}
+
+/* ============================================================
+   T4 — Overview 仪表盘 / Orders
+   ============================================================ */
+.stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px;}
+.stat{border:1px solid var(--border); border-radius:10px; background:var(--panel); padding:18px 16px;}
+.stat-n{font-size:24px; color:var(--green); margin-bottom:6px;}
+.stat-l{font-size:9px; letter-spacing:.16em; color:#555;}
+.bar{height:7px; border:1px solid var(--border); border-radius:99px; overflow:hidden; background:#0b0b0b;}
+.bar-in{height:100%; background:var(--green); border-radius:99px;}
+@media (max-width:900px){ .stat-row{grid-template-columns:repeat(2,1fr);} }

@@ -71,7 +71,7 @@ function EventRow({
         })
       : "—";
   return (
-    <Link href={`/events/${e.id}/edit`}>
+    <Link href={`/events/${e.id}`}>
       <div
         className="panel"
         style={{ marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}
