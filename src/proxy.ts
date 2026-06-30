@@ -30,13 +30,15 @@ export default async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isLogin = request.nextUrl.pathname.startsWith("/login");
-  if (!user && !isLogin) {
+  const path = request.nextUrl.pathname;
+  // /auth/* 必须放行:OAuth 回调时还没有会话,否则会被重定向回 /login
+  const isPublic = path.startsWith("/login") || path.startsWith("/auth");
+  if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
-  if (user && isLogin) {
+  if (user && path.startsWith("/login")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
