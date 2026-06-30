@@ -3,7 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Analytics 只读漏斗聚合。全部经 analytics_funnel() RPC(无 limit 的 Postgres 聚合,
-// 每层 distinct 用户;going 用 analytics_events 累计)。第二期只取全局(p_event_id=null)。
+// 每层 distinct 用户;going 用 analytics_events 累计)。
+// eventId=null → 全局漏斗(/analytics);传 events.id → 单场漏斗(运营中心数据分区)。
 export type FunnelStage = { label: string; users: number; pct: number | null }; // pct = 相对上一参考层的转化率
 export type AnalyticsData = {
   purchase: FunnelStage[]; // DETAIL VIEW → GOING → CHECKOUT START → PAID
@@ -13,8 +14,8 @@ export type AnalyticsData = {
 
 const pctOf = (n: number, base: number): number | null => (base > 0 ? Math.round((n / base) * 100) : null);
 
-export async function getAnalyticsData(svc: SupabaseClient): Promise<AnalyticsData> {
-  const { data } = await svc.rpc("analytics_funnel", { p_event_id: null }).single();
+export async function getAnalyticsData(svc: SupabaseClient, eventId: string | null = null): Promise<AnalyticsData> {
+  const { data } = await svc.rpc("analytics_funnel", { p_event_id: eventId }).single();
   const f = (data as any) ?? {};
 
   // bigint 经 PostgREST 回来可能是字符串 → Number 归一

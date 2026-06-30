@@ -1,16 +1,13 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saveEvent, geocodeAddress } from "../../actions";
 import { COL_TITLE, COL_VENUE, GENRES } from "@/lib/schemaMap";
-import StepTickets from "./StepTickets";
-import StepSettings from "./StepSettings";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Ev = Record<string, any>;
-
-const STEPS = ["TYPE", "INFO", "DATE & TIME", "LOCATION", "DETAILS", "TICKETS / RSVP", "SETTINGS"];
 
 function toLocal(iso: string | null): string {
   if (!iso) return "";
@@ -23,46 +20,52 @@ function fromLocal(v: string): string | null {
   return v ? new Date(v).toISOString() : null;
 }
 
-export default function Wizard({
-  event,
-  tiers,
-  codes,
-}: {
-  event: Ev;
-  tiers: any[];
-  codes: any[];
-}) {
-  const [step, setStep] = useState(0);
+// 单页基本信息表单(替代旧 7 步向导的步0-4)。票档/促销/设置/发布在运营中心。
+// 存草稿 = 方案 C:防抖整表存(~1.2s 空闲)+ 上传成功立即存 + 卸载/完成兜底 flush。
+const BASIC_FIELDS = [
+  "event_type",
+  COL_TITLE,
+  "teaser",
+  "poster_url",
+  "genre",
+  "date_tbd",
+  "event_date",
+  "end_date",
+  "timezone",
+  "location_type",
+  COL_VENUE,
+  "address",
+  "online_url",
+  "details",
+];
+const pickBasic = (e: Ev): Record<string, unknown> => {
+  const p: Record<string, unknown> = {};
+  for (const f of BASIC_FIELDS) p[f] = e[f] ?? null;
+  return p;
+};
+
+export default function BasicInfoForm({ event }: { event: Ev }) {
   const [ev, setEv] = useState<Ev>(event);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, start] = useTransition();
+  const router = useRouter();
+
+  const evRef = useRef(ev);
+  const firstRef = useRef(true);
+
+  // 保持 evRef 与最新 state 同步(commit 后),供防抖/卸载/override 合并读取
+  useEffect(() => {
+    evRef.current = ev;
+  });
 
   const set = (k: string, v: unknown) => setEv((p) => ({ ...p, [k]: v }));
 
-  // 每步离开时持久化该步字段(自动草稿)
-  const STEP_FIELDS: string[][] = useMemo(
-    () => [
-      ["event_type"],
-      [COL_TITLE, "teaser", "poster_url", "genre"],
-      ["date_tbd", "event_date", "end_date", "timezone"],
-      ["location_type", COL_VENUE, "address", "online_url"],
-      ["details"],
-      [], // tickets 自己管自己
-      [], // settings 自己管自己
-    ],
-    []
-  );
-
-  function persist(stepIdx: number, then?: () => void) {
-    const patch: Record<string, unknown> = {};
-    for (const f of STEP_FIELDS[stepIdx]) patch[f] = ev[f] ?? null;
-    if (Object.keys(patch).length === 0) {
-      then?.();
-      return;
-    }
-    startTransition(async () => {
-      const r = await saveEvent(ev.id, patch);
+  // 立即存(上传成功 / 完成按钮用):override 合并进最新 state 再发,避免 setState 异步滞后丢字段
+  function persistNow(override?: Record<string, unknown>, then?: () => void) {
+    const src = { ...evRef.current, ...(override ?? {}) };
+    start(async () => {
+      const r = await saveEvent(src.id, pickBasic(src));
       if (!r.ok) {
         setErr(r.error ?? "保存失败");
         return;
@@ -72,79 +75,97 @@ export default function Wizard({
       then?.();
     });
   }
+  const saveNow = (override: Record<string, unknown>) => persistNow(override);
 
-  const goto = (i: number) => persist(step, () => setStep(i));
-  const next = () => goto(Math.min(step + 1, 6));
-  const back = () => goto(Math.max(step - 1, 0));
+  // 防抖整表自动存:停止输入约 1.2s 后存一次(首渲染不存)
+  useEffect(() => {
+    if (firstRef.current) {
+      firstRef.current = false;
+      return;
+    }
+    const t = setTimeout(() => persistNow(), 1200);
+    return () => clearTimeout(t);
+  }, [ev]);
+
+  // 卸载兜底:离开页面时把最新内容再存一次(best-effort,不 await)
+  useEffect(() => {
+    return () => {
+      saveEvent(evRef.current.id, pickBasic(evRef.current));
+    };
+  }, []);
+
+  function finish() {
+    start(async () => {
+      const r = await saveEvent(ev.id, pickBasic(ev));
+      if (!r.ok) {
+        setErr(r.error ?? "保存失败");
+        return;
+      }
+      router.push(`/events/${ev.id}`);
+    });
+  }
+
+  const isNew = ev[COL_TITLE] === "UNTITLED EVENT";
 
   return (
-    <div>
+    <div style={{ maxWidth: 760 }}>
       <div className="page-h">
-        <h1>{ev[COL_TITLE] === "UNTITLED EVENT" ? "CREATE EVENT" : ev[COL_TITLE]}</h1>
-        <span className={"badge " + (ev.status === "published" ? "live" : "draft")}>
+        <h1>{isNew ? "CREATE EVENT" : ev[COL_TITLE]}</h1>
+        <span className={"badge " + (ev.status === "published" ? "live" : ev.status === "canceled" ? "" : "draft")}>
           {String(ev.status).toUpperCase()}
         </span>
       </div>
       {err && <div className="err">{err}</div>}
+      <div className="small muted" style={{ letterSpacing: ".12em", marginBottom: 18 }}>
+        {pending ? "SAVING…" : savedAt ? `DRAFT SAVED · ${savedAt}` : "自动保存:停笔约 1 秒存草稿"}
+      </div>
 
-      <div className="wiz">
-        <div className="rail">
-          {STEPS.map((s, i) => (
-            <button
-              key={s}
-              className={"rail-i " + (i === step ? "cur" : i < step ? "done" : "")}
-              onClick={() => goto(i)}
-            >
-              <span className="dot">{i < step ? "✓" : i + 1}</span> {s}
-            </button>
-          ))}
-          <div className="rail-save">
-            {pending ? "SAVING…" : savedAt ? `DRAFT SAVED · ${savedAt}` : "AUTOSAVE ON STEP CHANGE"}
-          </div>
+      <Block title="类型">
+        <StepType ev={ev} set={set} />
+      </Block>
+      <Block title="基本信息">
+        <StepInfo ev={ev} set={set} saveNow={saveNow} />
+      </Block>
+      <Block title="详情">
+        <StepDetails ev={ev} set={set} saveNow={saveNow} />
+      </Block>
+      <Block title="时间">
+        <StepDate ev={ev} set={set} />
+      </Block>
+      <Block title="地点">
+        <StepLocation ev={ev} set={set} />
+      </Block>
+
+      <div className="panel" style={{ marginBottom: 18 }}>
+        <div className="hint small muted" style={{ margin: 0 }}>
+          发布前需:标题 · 海报 · (实体活动)地址 · (售票活动)至少一个票档。
+          票档 / 折扣码 / 费用设置 + 正式发布都在<span className="green"> 运营中心 </span>对应分区操作。
         </div>
+      </div>
 
-        <div className="panel">
-          {step === 0 && <StepType ev={ev} set={set} />}
-          {step === 1 && <StepInfo ev={ev} set={set} />}
-          {step === 2 && <StepDate ev={ev} set={set} />}
-          {step === 3 && <StepLocation ev={ev} set={set} />}
-          {step === 4 && <StepDetails ev={ev} set={set} />}
-          {step === 5 && <StepTickets event={ev} tiers={tiers} codes={codes} />}
-          {step === 6 && <StepSettings event={ev} />}
-
-          {step < 5 && (
-            <div className="wiz-foot">
-              <button className="btn" onClick={back} disabled={step === 0}>
-                ← BACK
-              </button>
-              <button className="btn-green" onClick={next} disabled={pending}>
-                {pending ? "SAVING…" : "SAVE & NEXT →"}
-              </button>
-            </div>
-          )}
-          {step === 5 && (
-            <div className="wiz-foot">
-              <button className="btn" onClick={() => setStep(4)}>
-                ← BACK
-              </button>
-              <button className="btn-green" onClick={() => setStep(6)}>
-                NEXT →
-              </button>
-            </div>
-          )}
-        </div>
+      <div className="wiz-foot">
+        <button className="btn-green" onClick={finish} disabled={pending}>
+          {pending ? "SAVING…" : "完成 → 进运营中心"}
+        </button>
       </div>
     </div>
   );
 }
 
-/* ---------------- STEP 1: TYPE ---------------- */
+/* 分区块外壳:统一 panel + 灰标题(替代旧向导的 STEP n/7) */
+function Block({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="panel" style={{ marginBottom: 18 }}>
+      <div className="small muted" style={{ letterSpacing: ".16em", marginBottom: 18 }}>{title}</div>
+      {children}
+    </div>
+  );
+}
+
+/* ---------------- 类型 ---------------- */
 function StepType({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => void }) {
   return (
     <div>
-      <h2 className="small muted" style={{ letterSpacing: ".16em", marginBottom: 18 }}>
-        STEP 1 / 7 — EVENT TYPE
-      </h2>
       <div className="choice-row">
         <div
           className={"choice " + (ev.event_type === "ticketed" ? "on" : "")}
@@ -168,8 +189,16 @@ function StepType({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => void })
   );
 }
 
-/* ---------------- STEP 2: INFO ---------------- */
-function StepInfo({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => void }) {
+/* ---------------- 基本信息(标题 / teaser / genre / 海报) ---------------- */
+function StepInfo({
+  ev,
+  set,
+  saveNow,
+}: {
+  ev: Ev;
+  set: (k: string, v: unknown) => void;
+  saveNow: (override: Record<string, unknown>) => void;
+}) {
   const [uploading, setUploading] = useState(false);
   const [warn, setWarn] = useState<string | null>(null);
 
@@ -198,13 +227,11 @@ function StepInfo({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => void })
     }
     const { data } = supabase.storage.from("event-assets").getPublicUrl(path);
     set("poster_url", data.publicUrl);
+    saveNow({ poster_url: data.publicUrl }); // 上传成功立即存,不等防抖
   }
 
   return (
     <div>
-      <h2 className="small muted" style={{ letterSpacing: ".16em", marginBottom: 18 }}>
-        STEP 2 / 7 — EVENT INFO
-      </h2>
       <div className="field">
         <label>Title *</label>
         <input
@@ -268,13 +295,10 @@ function StepInfo({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => void })
   );
 }
 
-/* ---------------- STEP 3: DATE & TIME ---------------- */
+/* ---------------- 时间 ---------------- */
 function StepDate({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => void }) {
   return (
     <div>
-      <h2 className="small muted" style={{ letterSpacing: ".16em", marginBottom: 18 }}>
-        STEP 3 / 7 — DATE & TIME
-      </h2>
       <div className="field">
         <label className="toggle" style={{ textTransform: "none" }}>
           <input
@@ -320,7 +344,7 @@ function StepDate({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => void })
   );
 }
 
-/* ---------------- STEP 4: LOCATION ---------------- */
+/* ---------------- 地点 ---------------- */
 function StepLocation({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => void }) {
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -336,9 +360,6 @@ function StepLocation({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => voi
   const lt = ev.location_type ?? "physical";
   return (
     <div>
-      <h2 className="small muted" style={{ letterSpacing: ".16em", marginBottom: 18 }}>
-        STEP 4 / 7 — LOCATION
-      </h2>
       <div className="row3" style={{ marginBottom: 18 }}>
         {(["physical", "online", "tbd"] as const).map((t) => (
           <div key={t} className={"choice " + (lt === t ? "on" : "")} onClick={() => set("location_type", t)}>
@@ -395,14 +416,22 @@ function StepLocation({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => voi
   );
 }
 
-/* ---------------- STEP 5: DETAILS(富文本=文字块+图片块) ---------------- */
-type Block = { type: "p"; text: string } | { type: "img"; url: string };
+/* ---------------- 详情(富文本=文字块+图片块) ---------------- */
+type Block2 = { type: "p"; text: string } | { type: "img"; url: string };
 
-function StepDetails({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => void }) {
-  const blocks: Block[] = Array.isArray(ev.details) ? ev.details : [];
+function StepDetails({
+  ev,
+  set,
+  saveNow,
+}: {
+  ev: Ev;
+  set: (k: string, v: unknown) => void;
+  saveNow: (override: Record<string, unknown>) => void;
+}) {
+  const blocks: Block2[] = Array.isArray(ev.details) ? ev.details : [];
   const [uploading, setUploading] = useState(false);
 
-  const update = (next: Block[]) => set("details", next);
+  const update = (next: Block2[]) => set("details", next);
 
   async function addImage(file: File) {
     setUploading(true);
@@ -412,14 +441,13 @@ function StepDetails({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => void
     setUploading(false);
     if (error) return;
     const { data } = supabase.storage.from("event-assets").getPublicUrl(path);
-    update([...blocks, { type: "img", url: data.publicUrl }]);
+    const next: Block2[] = [...blocks, { type: "img", url: data.publicUrl }];
+    update(next);
+    saveNow({ details: next }); // 加图立即存,不等防抖
   }
 
   return (
     <div>
-      <h2 className="small muted" style={{ letterSpacing: ".16em", marginBottom: 18 }}>
-        STEP 5 / 7 — EVENT DETAILS
-      </h2>
       {blocks.map((b, i) => (
         <div className="blk" key={i}>
           {b.type === "p" ? (

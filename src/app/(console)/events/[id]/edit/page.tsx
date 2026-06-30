@@ -1,7 +1,8 @@
 import { requireAdmin } from "@/lib/auth";
 import { notFound } from "next/navigation";
-import Wizard from "./Wizard";
+import BasicInfoForm from "./BasicInfoForm";
 
+// 创建 / 编辑活动基本信息(单页,步0-4)。票档/促销/设置/发布在运营中心。
 export default async function EditEventPage({
   params,
 }: {
@@ -18,19 +19,5 @@ export default async function EditEventPage({
     .single();
   if (!event) notFound();
 
-  const { data: tiers } = await svc
-    .from("ticket_types")
-    .select("*")
-    .eq("event_id", id)
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
-
-  const { data: codes } = await svc
-    .from("discount_codes")
-    .select("*")
-    .or(`event_id.eq.${id},event_id.is.null`)
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
-
-  return <Wizard event={event} tiers={tiers ?? []} codes={codes ?? []} />;
+  return <BasicInfoForm event={event} />;
 }

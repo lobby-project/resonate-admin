@@ -6,7 +6,7 @@ import { saveEvent, publishEvent, unpublishEvent } from "../../actions";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export default function StepSettings({ event }: { event: any }) {
+export default function StepSettings({ event, heading = "STEP 7 / 7 — SETTINGS" }: { event: any; heading?: string }) {
   const [s, setS] = useState({
     fee_name: event.fee_name ?? "Processing",
     fee_percent: event.fee_percent ?? 15,
@@ -56,7 +56,7 @@ export default function StepSettings({ event }: { event: any }) {
   return (
     <div>
       <h2 className="small muted" style={{ letterSpacing: ".16em", marginBottom: 18 }}>
-        STEP 7 / 7 — SETTINGS
+        {heading}
       </h2>
 
       {isTicketed && (
