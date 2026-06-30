@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/", label: "DASHBOARD" },
   { href: "/events", label: "EVENTS" },
   { href: "/orders", label: "ORDERS" },
+  { href: "/analytics", label: "ANALYTICS" },
 ];
 
 // 控制台导航(active 高亮按真实 pathname,不写死)。
