@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import ConsoleNav from "./ConsoleNav";
 
 // 控制台外壳 + is_admin 硬门禁(服务端校验,不靠前端隐藏)
 export default async function ConsoleLayout({
@@ -50,12 +50,7 @@ export default async function ConsoleLayout({
           res<span className="o">◉</span>nate
         </div>
         <div className="side-sub">TICKETING CONSOLE</div>
-        <Link href="/" className="nav-i active">
-          EVENTS
-        </Link>
-        <Link href="/orders" className="nav-i">
-          ORDERS
-        </Link>
+        <ConsoleNav />
         <div className="side-foot">
           <div style={{ marginBottom: 8 }}>{row.display_name || user.email}</div>
           <form action="/auth/signout" method="post">

@@ -1,91 +1,121 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
-import { createDraftAndRedirect } from "./events/actions";
+import { getDashboardData } from "./dashboard/data";
 
-// 活动列表:草稿 + 已发布(只看自办 is_owned)
-export default async function EventsListPage() {
+const $ = (c: number) => `$${(c / 100).toFixed(2)}`;
+
+// Dashboard 首屏:KPI 一排 → 即将到来的活动(带进度) → 最近订单。只读聚合。
+export default async function DashboardPage() {
   const { svc } = await requireAdmin();
-
-  const { data: events } = await svc
-    .from("events")
-    .select("id, artist, status, event_type, date_tbd, event_date, poster_url")
-    .eq("is_owned", true)
-    .order("created_at", { ascending: false } as never)
-    .limit(100);
-
-  const drafts = (events ?? []).filter((e) => e.status === "draft");
-  const published = (events ?? []).filter((e) => e.status !== "draft");
+  const d = await getDashboardData(svc);
 
   return (
     <div>
       <div className="page-h">
-        <h1>EVENTS</h1>
-        <form action={createDraftAndRedirect}>
-          <button className="btn-green">+ NEW EVENT</button>
-        </form>
+        <h1>DASHBOARD</h1>
       </div>
 
-      {drafts.length > 0 && (
-        <div style={{ marginBottom: 28 }}>
-          <div className="small muted" style={{ letterSpacing: ".14em", marginBottom: 10 }}>
-            DRAFTS
-          </div>
-          {drafts.map((e) => (
-            <EventRow key={e.id} e={e} />
-          ))}
+      {/* KPI 卡一排 */}
+      <div className="stat-row">
+        <div className="stat">
+          <div className="stat-n">{$(d.revenueCents)}</div>
+          <div className="stat-l">TOTAL REVENUE</div>
         </div>
-      )}
-
-      <div className="small muted" style={{ letterSpacing: ".14em", marginBottom: 10 }}>
-        PUBLISHED
+        <div className="stat">
+          <div className="stat-n">{d.ticketsSold}</div>
+          <div className="stat-l">TICKETS SOLD</div>
+        </div>
+        <div className="stat">
+          <div className="stat-n">{d.upcoming.length}</div>
+          <div className="stat-l">UPCOMING EVENTS</div>
+        </div>
+        <div className="stat">
+          <div className="stat-n">{d.pendingOrders}</div>
+          <div className="stat-l">PENDING ORDERS</div>
+        </div>
       </div>
-      {published.length === 0 && (
-        <div className="panel muted small">还没有已发布的活动。点 NEW EVENT 创建第一场。</div>
+
+      {/* 即将到来的活动(带销售进度条) */}
+      <div className="small muted" style={{ letterSpacing: ".14em", margin: "28px 0 10px" }}>
+        UPCOMING
+      </div>
+      {d.upcoming.length === 0 && (
+        <div className="panel muted small">没有即将到来的已发布活动。</div>
       )}
-      {published.map((e) => (
-        <EventRow key={e.id} e={e} />
-      ))}
+      {d.upcoming.map((e) => {
+        const pct = e.total && e.total > 0 ? Math.min(100, Math.round((e.sold / e.total) * 100)) : 0;
+        const date = e.event_date
+          ? new Date(e.event_date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+          : "—";
+        return (
+          <Link key={e.id} href={`/events/${e.id}`}>
+            <div className="panel" style={{ marginBottom: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+                <div style={{ color: "#fff" }}>{e.artist || "UNTITLED EVENT"}</div>
+                <div className="small muted">
+                  {date}
+                  {e.event_time ? ` · ${e.event_time}` : ""}
+                </div>
+              </div>
+              {e.total != null ? (
+                <>
+                  <div className="bar">
+                    <div className="bar-in" style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="small muted" style={{ marginTop: 6 }}>
+                    {e.sold} / {e.total} sold · {pct}%
+                  </div>
+                </>
+              ) : (
+                <div className="small muted">{e.sold} sold · 无限库存</div>
+              )}
+            </div>
+          </Link>
+        );
+      })}
+
+      {/* 最近订单 8 条 */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", margin: "28px 0 10px" }}>
+        <div className="small muted" style={{ letterSpacing: ".14em" }}>RECENT ORDERS</div>
+        <Link href="/orders" className="small green">VIEW ALL →</Link>
+      </div>
+      <div className="panel" style={{ padding: 0 }}>
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th>NAME</th>
+              <th>EVENT</th>
+              <th>DATE</th>
+              <th>STATUS</th>
+              <th style={{ textAlign: "right" }}>TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+            {d.recent.length === 0 && (
+              <tr>
+                <td colSpan={5} className="muted small">还没有订单</td>
+              </tr>
+            )}
+            {d.recent.map((o) => (
+              <tr key={o.id}>
+                <td>
+                  <Link href={`/orders/${o.id}`} className="green">
+                    {o.attendee_name || "—"}
+                  </Link>
+                </td>
+                <td className="muted">{o.eventTitle ?? "—"}</td>
+                <td className="muted small">
+                  {new Date(o.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                </td>
+                <td>
+                  <span className={"badge " + (o.status === "paid" ? "live" : "")}>{o.status.toUpperCase()}</span>
+                </td>
+                <td style={{ textAlign: "right" }}>{$(o.total_cents)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  );
-}
-
-function EventRow({
-  e,
-}: {
-  e: {
-    id: string;
-    artist: string | null;
-    status: string;
-    event_type: string;
-    date_tbd: boolean;
-    event_date: string | null;
-  };
-}) {
-  const date = e.date_tbd
-    ? "DATE TBD"
-    : e.event_date
-      ? new Date(e.event_date).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })
-      : "—";
-  return (
-    <Link href={`/events/${e.id}`}>
-      <div
-        className="panel"
-        style={{ marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}
-      >
-        <div>
-          <div style={{ color: "#fff", marginBottom: 4 }}>{e.artist || "UNTITLED EVENT"}</div>
-          <div className="small muted">
-            {date} · {e.event_type === "rsvp" ? "RSVP" : "TICKETED"}
-          </div>
-        </div>
-        <span className={"badge " + (e.status === "published" ? "live" : "draft")}>
-          {e.status.toUpperCase()}
-        </span>
-      </div>
-    </Link>
   );
 }

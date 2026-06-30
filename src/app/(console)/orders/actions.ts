@@ -121,6 +121,7 @@ export async function cancelEvent(eventId: string) {
   }
 
   revalidatePath(`/events/${eventId}`);
-  revalidatePath("/");
+  revalidatePath("/events"); // 活动列表(取消后从这刷)
+  revalidatePath("/"); // Dashboard(即将活动/计数受影响)
   return { ok: true, notified: sent, holders: userIds.length };
 }
