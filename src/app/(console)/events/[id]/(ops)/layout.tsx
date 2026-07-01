@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { COL_TITLE, COL_VENUE } from "@/lib/schemaMap";
 import EventTabs from "./EventTabs";
+import BackLink from "../../../BackLink";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const $ = (c: number) => `$${(c / 100).toFixed(2)}`;
@@ -40,6 +41,7 @@ export default async function EventLayout({
 
   return (
     <div>
+      <BackLink href="/events" label="Events" />
       <div className="page-h">
         <div>
           <h1>{title}</h1>
@@ -75,7 +77,7 @@ export default async function EventLayout({
       </div>
       {refundedSum > 0 && (
         <div className="small muted" style={{ marginBottom: 18 }}>
-          已退款 {refunded.length} 单 · {$(refundedSum)}
+          Refunded {refunded.length} order{refunded.length === 1 ? "" : "s"} · {$(refundedSum)}
         </div>
       )}
 

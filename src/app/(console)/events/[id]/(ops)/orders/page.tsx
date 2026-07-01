@@ -48,10 +48,10 @@ export default async function EventOrdersSection({
       {/* ---- 本场订单 ---- */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div className="small muted" style={{ letterSpacing: ".14em" }}>
-          本场订单 <span className="green">{list.length}</span>
+          Event Orders <span className="green">{list.length}</span>
           {list.length === 100 ? "+" : ""}
         </div>
-        <Link href={`/orders?event=${id}`} className="btn btn-sm">全部订单 / 搜索 / 导出 →</Link>
+        <Link href={`/orders?event=${id}`} className="btn btn-sm">All Orders / Search / Export →</Link>
       </div>
 
       <div className="panel" style={{ padding: 0, marginBottom: 26 }}>
@@ -67,13 +67,13 @@ export default async function EventOrdersSection({
           <tbody>
             {list.length === 0 && (
               <tr>
-                <td colSpan={4} className="muted small">还没有订单</td>
+                <td colSpan={4} className="muted small">No orders yet</td>
               </tr>
             )}
             {list.map((o) => (
               <tr key={o.id}>
                 <td>
-                  <Link href={`/orders/${o.id}`} className="green">
+                  <Link href={`/orders/${o.id}?event=${id}`} className="green">
                     {o.attendee_name || "—"}
                   </Link>
                 </td>
@@ -81,7 +81,7 @@ export default async function EventOrdersSection({
                   {new Date(o.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                 </td>
                 <td>
-                  <span className={"badge " + (o.status === "paid" ? "live" : "")}>{String(o.status).toUpperCase()}</span>
+                  <span className={"pill " + String(o.status)}>{String(o.status).toUpperCase()}</span>
                 </td>
                 <td style={{ textAlign: "right" }}>{$(o.total_cents)}</td>
               </tr>
@@ -92,7 +92,7 @@ export default async function EventOrdersSection({
 
       {/* ---- GOING 名单 ---- */}
       <div className="small muted" style={{ letterSpacing: ".14em", marginBottom: 14 }}>
-        GOING 名单 <span className="green">{att.length}</span>
+        Guest List <span className="green">{att.length}</span>
       </div>
 
       <div className="panel" style={{ padding: 0 }}>
@@ -103,13 +103,13 @@ export default async function EventOrdersSection({
               <th>NAME</th>
               <th>AGE / GENDER</th>
               <th>IG</th>
-              <th style={{ textAlign: "right" }}>报名</th>
+              <th style={{ textAlign: "right" }}>RSVP&apos;d</th>
             </tr>
           </thead>
           <tbody>
             {att.length === 0 && (
               <tr>
-                <td colSpan={5} className="muted small">还没有人 going</td>
+                <td colSpan={5} className="muted small">No guests yet</td>
               </tr>
             )}
             {att.map((a) => {
@@ -118,7 +118,7 @@ export default async function EventOrdersSection({
               return (
                 <tr key={a.user_id}>
                   <td className="muted small" style={{ letterSpacing: ".1em" }}>#{a.anon_num ?? "—"}</td>
-                  <td style={{ color: "#fff" }}>{u?.display_name || "—"}</td>
+                  <td style={{ color: "var(--text)" }}>{u?.display_name || "—"}</td>
                   <td className="muted small">{ageGender}</td>
                   <td className="muted small">{u?.ig_handle ? `@${u.ig_handle}` : "—"}</td>
                   <td className="muted small" style={{ textAlign: "right" }}>

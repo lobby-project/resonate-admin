@@ -32,8 +32,8 @@ export default function ChannelLinkBuilder({ eventId }: { eventId: string }) {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="渠道名 e.g. instagram"
-          style={{ flex: 1, background: "#0b0b0b", border: "1px solid var(--border)", borderRadius: 6, color: "#fff", fontFamily: "inherit", fontSize: 13, padding: "9px 12px", outline: "none" }}
+          placeholder="Channel name e.g. instagram"
+          style={{ flex: 1, background: "var(--panel-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", color: "var(--text)", fontFamily: "inherit", fontSize: 13, padding: "9px 12px", outline: "none" }}
         />
         <button className="btn btn-sm" disabled={!url} onClick={copy}>
           {copied ? "COPIED ✓" : "COPY LINK"}
@@ -42,8 +42,8 @@ export default function ChannelLinkBuilder({ eventId }: { eventId: string }) {
       {url && (
         <div className="small muted" style={{ marginTop: 10, wordBreak: "break-all" }}>{url}</div>
       )}
-      <div className="small" style={{ marginTop: 8, color: "#555" }}>
-        把链接发到对应渠道,买家从这进来的购票会归到该渠道。
+      <div className="small" style={{ marginTop: 8, color: "var(--text-4)" }}>
+        Share this link on that channel; purchases coming through it are attributed to it.
       </div>
     </div>
   );

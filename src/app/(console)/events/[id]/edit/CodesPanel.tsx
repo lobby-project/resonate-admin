@@ -26,14 +26,14 @@ export default function CodesPanel({ event, codes }: { event: any; codes: any[] 
 
   function save() {
     if (!editing) return;
-    if (!editing.code.trim()) return setErr("码必填");
-    if (mode === "percent" && !editing.percent_off) return setErr("百分比必填");
-    if (mode === "amount" && !editing.amount_off_cents) return setErr("减免金额必填");
+    if (!editing.code.trim()) return setErr("Code is required");
+    if (mode === "percent" && !editing.percent_off) return setErr("Percentage is required");
+    if (mode === "amount" && !editing.amount_off_cents) return setErr("Discount amount is required");
     setErr(null);
     start(async () => {
       const payload = { ...editing, percent_off: mode === "percent" ? editing.percent_off : null, amount_off_cents: mode === "amount" ? editing.amount_off_cents : null };
       const r = await upsertCode(event.id, payload);
-      if (!r.ok) return setErr(r.error ?? "保存失败");
+      if (!r.ok) return setErr(r.error ?? "Save failed");
       setEditing(null);
       router.refresh();
     });
@@ -54,9 +54,9 @@ export default function CodesPanel({ event, codes }: { event: any; codes: any[] 
           </div>
           <div className="tier-meta">
             <span>{c.percent_off ? `-${c.percent_off}%` : `-${$(c.amount_off_cents)}`}</span>
-            <span>{c.event_id ? "只限本场" : "全场通用"}</span>
-            <span>{c.max_uses ? `${c.used_count}/${c.max_uses} 已用` : "不限次数"}</span>
-            {c.expires_at && <span>过期 {new Date(c.expires_at).toLocaleDateString()}</span>}
+            <span>{c.event_id ? "This event only" : "All events"}</span>
+            <span>{c.max_uses ? `${c.used_count}/${c.max_uses} used` : "Unlimited uses"}</span>
+            {c.expires_at && <span>Expires {new Date(c.expires_at).toLocaleDateString()}</span>}
           </div>
         </div>
       ))}
@@ -86,18 +86,18 @@ export default function CodesPanel({ event, codes }: { event: any; codes: any[] 
           </div>
           <div className="row3">
             <div className="field">
-              <label>Max uses (空=不限)</label>
+              <label>Max uses (empty = unlimited)</label>
               <input type="number" min={1} value={editing.max_uses ?? ""} onChange={(e) => setEditing({ ...editing, max_uses: e.target.value ? Number(e.target.value) : null })} />
             </div>
             <div className="field">
-              <label>Expires (空=不过期)</label>
+              <label>Expires (empty = never)</label>
               <input type="datetime-local" value={toLocal(editing.expires_at)} onChange={(e) => setEditing({ ...editing, expires_at: fromLocal(e.target.value) })} />
             </div>
             <div className="field">
               <label>Scope</label>
               <select value={editing.scope_event ? "event" : "all"} onChange={(e) => setEditing({ ...editing, scope_event: e.target.value === "event" })}>
-                <option value="event">只限本场</option>
-                <option value="all">全场通用</option>
+                <option value="event">This event only</option>
+                <option value="all">All events</option>
               </select>
             </div>
           </div>

@@ -43,7 +43,7 @@ export default async function EventDataSection({
       <div className="small muted" style={{ letterSpacing: ".14em", marginBottom: 10 }}>CHANNEL PERFORMANCE</div>
       <div className="panel" style={{ padding: 0, marginBottom: 18 }}>
         {channels.length === 0 ? (
-          <div className="small muted" style={{ padding: 20 }}>还没有渠道数据 —— 等渠道链接有人点 / 买</div>
+          <div className="small muted" style={{ padding: 20 }}>No channel data yet — once channel links get clicks or sales</div>
         ) : (
           <table className="tbl">
             <thead>

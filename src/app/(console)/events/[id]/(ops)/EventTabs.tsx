@@ -9,15 +9,15 @@ export default function EventTabs({ id }: { id: string }) {
   const pathname = usePathname();
   const base = `/events/${id}`;
   const tabs = [
-    { href: base, label: "门票", exact: true },
-    { href: `${base}/promos`, label: "促销" },
-    { href: `${base}/data`, label: "数据" },
-    { href: `${base}/orders`, label: "订单 & 名单" },
-    { href: `${base}/settings`, label: "设置" },
+    { href: base, label: "Tickets", exact: true },
+    { href: `${base}/promos`, label: "Promotions" },
+    { href: `${base}/data`, label: "Analytics" },
+    { href: `${base}/orders`, label: "Orders & Guests" },
+    { href: `${base}/settings`, label: "Settings" },
   ];
 
   return (
-    <div style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--border)", marginBottom: 22, flexWrap: "wrap" }}>
+    <div style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--border)", marginBottom: 22, overflowX: "auto", whiteSpace: "nowrap" }}>
       {tabs.map((t) => {
         const active = t.exact ? pathname === t.href : pathname === t.href || pathname.startsWith(t.href + "/");
         return (
@@ -28,9 +28,10 @@ export default function EventTabs({ id }: { id: string }) {
             style={{
               padding: "10px 14px",
               letterSpacing: ".1em",
-              borderBottom: active ? "2px solid var(--green)" : "2px solid transparent",
+              borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
               marginBottom: -1,
               textDecoration: "none",
+              flexShrink: 0,
             }}
           >
             {t.label}

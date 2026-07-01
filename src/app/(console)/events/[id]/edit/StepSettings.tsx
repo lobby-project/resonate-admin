@@ -27,7 +27,7 @@ export default function StepSettings({ event, heading = "STEP 7 / 7 — SETTINGS
     start(async () => {
       const r = await saveEvent(event.id, s);
       if (!r.ok) {
-        setErrors([r.error ?? "保存失败"]);
+        setErrors([r.error ?? "Save failed"]);
         return;
       }
       setErrors([]);
@@ -45,7 +45,7 @@ export default function StepSettings({ event, heading = "STEP 7 / 7 — SETTINGS
           return;
         }
         setErrors([]);
-        setOkMsg("已发布——产品端 R◉SELECTED 货架立刻可见(T2 上线后)");
+        setOkMsg("Published — visible on the product R◉SELECTED shelf (after T2 launch)");
         router.refresh();
       })
     );
@@ -62,7 +62,7 @@ export default function StepSettings({ event, heading = "STEP 7 / 7 — SETTINGS
       {isTicketed && (
         <>
           <div className="small muted" style={{ letterSpacing: ".12em", marginBottom: 10 }}>
-            BUYER FEE(向买家加收,结账单列一行;名目别叫 Tax)
+            BUYER FEE (added to the buyer at checkout as its own line; do not call it Tax)
           </div>
           <div className="row2" style={{ maxWidth: 480 }}>
             <div className="field">
@@ -79,7 +79,7 @@ export default function StepSettings({ event, heading = "STEP 7 / 7 — SETTINGS
             </div>
           </div>
           <div className="hint" style={{ marginBottom: 18 }}>
-            示例:$25 票 + {s.fee_percent}% {s.fee_name} = 买家付 ${(25 * (1 + Number(s.fee_percent) / 100)).toFixed(2)}
+            Example: $25 ticket + {s.fee_percent}% {s.fee_name} = buyer pays ${(25 * (1 + Number(s.fee_percent) / 100)).toFixed(2)}
           </div>
         </>
       )}
@@ -90,12 +90,12 @@ export default function StepSettings({ event, heading = "STEP 7 / 7 — SETTINGS
       <div className="field">
         <label className="toggle" style={{ textTransform: "none" }}>
           <input type="checkbox" checked={s.sales_open} onChange={(e) => set("sales_open", e.target.checked)} />
-          {isTicketed ? "售票开启(关掉=暂停售卖)" : "RSVP 开启"}
+          {isTicketed ? "Sales open (off = pause selling)" : "RSVP open"}
         </label>
       </div>
       <div className="row2" style={{ maxWidth: 480 }}>
         <div className="field">
-          <label>每单限购</label>
+          <label>Per-order limit</label>
           <input
             type="number" min={1} max={50}
             value={s.ticket_limit_per_order}
@@ -105,32 +105,32 @@ export default function StepSettings({ event, heading = "STEP 7 / 7 — SETTINGS
         <div className="field" style={{ display: "flex", alignItems: "flex-end", paddingBottom: 12 }}>
           <label className="toggle" style={{ textTransform: "none" }}>
             <input type="checkbox" checked={s.collect_phone} onChange={(e) => set("collect_phone", e.target.checked)} />
-            结账收电话号
+            Collect phone at checkout
           </label>
         </div>
       </div>
       <div className="row2">
         <div className="field">
-          <label>售罄提示文案</label>
+          <label>Sold-out message</label>
           <input type="text" value={s.soldout_message} onChange={(e) => set("soldout_message", e.target.value)} />
         </div>
         <div className="field">
-          <label>关闭提示文案</label>
+          <label>Closed message</label>
           <input type="text" value={s.closed_message} onChange={(e) => set("closed_message", e.target.value)} />
         </div>
       </div>
 
       <div className="field">
-        <label>Refund policy(显示在购票页)</label>
+        <label>Refund policy (shown on checkout)</label>
         <textarea
           value={s.refund_policy}
-          placeholder="All sales final. / 演出前 48 小时可全额退款…"
+          placeholder="All sales final. / Full refund up to 48 hours before the show…"
           onChange={(e) => set("refund_policy", e.target.value)}
         />
       </div>
 
       <p className="hint small muted" style={{ marginBottom: 18 }}>
-        确认/提醒/取消邮件三件套在 T3/T4 接入(Resend),发布不受影响。
+        Confirmation / reminder / cancellation emails ship later (Resend); publishing is unaffected.
       </p>
 
       {errors.length > 0 && (

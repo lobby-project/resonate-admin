@@ -21,35 +21,39 @@ export default async function EventsListPage() {
       <div className="page-h">
         <h1>EVENTS</h1>
         <form action={createDraftAndRedirect}>
-          <button className="btn-green">+ NEW EVENT</button>
+          <button className="btn-green">+ New Event</button>
         </form>
       </div>
 
       {drafts.length > 0 && (
-        <div style={{ marginBottom: 28 }}>
+        <>
           <div className="small muted" style={{ letterSpacing: ".14em", marginBottom: 10 }}>
             DRAFTS
           </div>
-          {drafts.map((e) => (
-            <EventRow key={e.id} e={e} />
-          ))}
-        </div>
+          <div className="ev-grid">
+            {drafts.map((e) => (
+              <EventCard key={e.id} e={e} />
+            ))}
+          </div>
+        </>
       )}
 
       <div className="small muted" style={{ letterSpacing: ".14em", marginBottom: 10 }}>
         PUBLISHED
       </div>
       {published.length === 0 && (
-        <div className="panel muted small">还没有已发布的活动。点 NEW EVENT 创建第一场。</div>
+        <div className="panel muted small">No published events yet. Click New Event to create your first.</div>
       )}
-      {published.map((e) => (
-        <EventRow key={e.id} e={e} />
-      ))}
+      <div className="ev-grid">
+        {published.map((e) => (
+          <EventCard key={e.id} e={e} />
+        ))}
+      </div>
     </div>
   );
 }
 
-function EventRow({
+function EventCard({
   e,
 }: {
   e: {
@@ -59,8 +63,10 @@ function EventRow({
     event_type: string;
     date_tbd: boolean;
     event_date: string | null;
+    poster_url: string | null;
   };
 }) {
+  const title = e.artist || "UNTITLED EVENT";
   const date = e.date_tbd
     ? "DATE TBD"
     : e.event_date
@@ -70,21 +76,26 @@ function EventRow({
           year: "numeric",
         })
       : "—";
+  const badgeClass = e.status === "published" ? "live" : e.status === "canceled" ? "canceled" : "draft";
+
   return (
-    <Link href={`/events/${e.id}`}>
-      <div
-        className="panel"
-        style={{ marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}
-      >
-        <div>
-          <div style={{ color: "#fff", marginBottom: 4 }}>{e.artist || "UNTITLED EVENT"}</div>
-          <div className="small muted">
-            {date} · {e.event_type === "rsvp" ? "RSVP" : "TICKETED"}
+    <Link href={`/events/${e.id}`} className="ev-card">
+      <div className="ev-cover-box">
+        {e.poster_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={e.poster_url} alt={title} />
+        ) : (
+          <div className="ev-ph">
+            <span>{title[0]}</span>
           </div>
+        )}
+        <span className={"ev-badge " + badgeClass}>{e.status.toUpperCase()}</span>
+      </div>
+      <div className="ev-card-body">
+        <div className="ev-card-name">{title}</div>
+        <div className="ev-card-meta">
+          {date} · {e.event_type === "rsvp" ? "RSVP" : "TICKETED"}
         </div>
-        <span className={"badge " + (e.status === "published" ? "live" : "draft")}>
-          {e.status.toUpperCase()}
-        </span>
       </div>
     </Link>
   );

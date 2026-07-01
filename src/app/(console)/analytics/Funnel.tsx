@@ -20,7 +20,7 @@ export default function Funnel({
         return (
           <div key={s.label} style={{ marginBottom: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 5 }}>
-              <span className="small" style={{ color: "#fff", letterSpacing: ".08em" }}>{s.label}</span>
+              <span className="small" style={{ color: "var(--text)", letterSpacing: ".08em" }}>{s.label}</span>
               <span className="small muted">
                 <span className="green" style={{ fontSize: 14 }}>{s.users.toLocaleString()}</span>
                 {s.pct != null && <span style={{ marginLeft: 8 }}>{s.pct}%</span>}

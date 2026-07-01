@@ -15,8 +15,8 @@ export async function refundOrder(orderId: string) {
   const { svc } = await requireAdmin();
 
   const { data: order } = await svc.from("orders").select("*").eq("id", orderId).single();
-  if (!order) return { ok: false, error: "订单不存在" };
-  if (order.status !== "paid") return { ok: false, error: `只有 paid 订单能退,当前是 ${order.status}` };
+  if (!order) return { ok: false, error: "Order not found" };
+  if (order.status !== "paid") return { ok: false, error: `Only paid orders can be refunded; current status is ${order.status}` };
 
   // Stripe 退款(免费单没有 payment_intent,跳过 Stripe 直接走库内退)
   if (order.stripe_payment_intent) {
@@ -24,7 +24,7 @@ export async function refundOrder(orderId: string) {
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
       await stripe.refunds.create({ payment_intent: order.stripe_payment_intent });
     } catch (e) {
-      return { ok: false, error: `Stripe 退款失败:${(e as Error).message}` };
+      return { ok: false, error: `Stripe refund failed: ${(e as Error).message}` };
     }
   }
 
@@ -90,8 +90,8 @@ export async function cancelEvent(eventId: string) {
     .eq("id", eventId)
     .eq("is_owned", true)
     .single();
-  if (!ev) return { ok: false, error: "活动不存在" };
-  if (ev.status === "canceled") return { ok: false, error: "已经是取消状态" };
+  if (!ev) return { ok: false, error: "Event not found" };
+  if (ev.status === "canceled") return { ok: false, error: "Event is already canceled" };
 
   await svc.from("events").update({ status: "canceled", sales_open: false }).eq("id", eventId);
 

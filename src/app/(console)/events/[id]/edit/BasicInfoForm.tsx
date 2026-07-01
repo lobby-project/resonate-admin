@@ -67,7 +67,7 @@ export default function BasicInfoForm({ event }: { event: Ev }) {
     start(async () => {
       const r = await saveEvent(src.id, pickBasic(src));
       if (!r.ok) {
-        setErr(r.error ?? "保存失败");
+        setErr(r.error ?? "Save failed");
         return;
       }
       setErr(null);
@@ -98,7 +98,7 @@ export default function BasicInfoForm({ event }: { event: Ev }) {
     start(async () => {
       const r = await saveEvent(ev.id, pickBasic(ev));
       if (!r.ok) {
-        setErr(r.error ?? "保存失败");
+        setErr(r.error ?? "Save failed");
         return;
       }
       router.push(`/events/${ev.id}`);
@@ -117,35 +117,35 @@ export default function BasicInfoForm({ event }: { event: Ev }) {
       </div>
       {err && <div className="err">{err}</div>}
       <div className="small muted" style={{ letterSpacing: ".12em", marginBottom: 18 }}>
-        {pending ? "SAVING…" : savedAt ? `DRAFT SAVED · ${savedAt}` : "自动保存:停笔约 1 秒存草稿"}
+        {pending ? "SAVING…" : savedAt ? `DRAFT SAVED · ${savedAt}` : "Autosave: saves a draft ~1s after you stop typing"}
       </div>
 
-      <Block title="类型">
+      <Block title="Type">
         <StepType ev={ev} set={set} />
       </Block>
-      <Block title="基本信息">
+      <Block title="Basic Info">
         <StepInfo ev={ev} set={set} saveNow={saveNow} />
       </Block>
-      <Block title="详情">
+      <Block title="Details">
         <StepDetails ev={ev} set={set} saveNow={saveNow} />
       </Block>
-      <Block title="时间">
+      <Block title="Date & Time">
         <StepDate ev={ev} set={set} />
       </Block>
-      <Block title="地点">
+      <Block title="Location">
         <StepLocation ev={ev} set={set} />
       </Block>
 
       <div className="panel" style={{ marginBottom: 18 }}>
         <div className="hint small muted" style={{ margin: 0 }}>
-          发布前需:标题 · 海报 · (实体活动)地址 · (售票活动)至少一个票档。
-          票档 / 折扣码 / 费用设置 + 正式发布都在<span className="green"> 运营中心 </span>对应分区操作。
+          Before publishing: Title · Poster · (physical) Address · (ticketed) at least one ticket tier.
+          Tickets / discount codes / fees + publishing all live in the<span className="green"> Operations </span>sections.
         </div>
       </div>
 
       <div className="wiz-foot">
         <button className="btn-green" onClick={finish} disabled={pending}>
-          {pending ? "SAVING…" : "完成 → 进运营中心"}
+          {pending ? "SAVING…" : "Done → Operations"}
         </button>
       </div>
     </div>
@@ -172,18 +172,18 @@ function StepType({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => void })
           onClick={() => set("event_type", "ticketed")}
         >
           <div className="c-t">TICKET EVENT</div>
-          <div className="c-d">卖票收钱。多票档 / 早鸟 / 折扣码,Stripe 收款,出二维码电子票。</div>
+          <div className="c-d">Sell tickets. Multiple tiers / early bird / discount codes, Stripe payments, QR e-tickets.</div>
         </div>
         <div
           className={"choice " + (ev.event_type === "rsvp" ? "on" : "")}
           onClick={() => set("event_type", "rsvp")}
         >
           <div className="c-t">RSVP EVENT</div>
-          <div className="c-d">免费活动,注册用户报名占位。低门槛获客钩子,可设容量上限。</div>
+          <div className="c-d">Free event; registered users RSVP to hold a spot. Low-friction acquisition hook, optional capacity cap.</div>
         </div>
       </div>
       <p className="hint small muted" style={{ marginTop: 14 }}>
-        日期 TBD 的活动只能先开 RSVP 攒人,锁定日期后才能开售付费票。
+        TBD-date events can only open RSVP first; paid tickets unlock once the date is set.
       </p>
     </div>
   );
@@ -214,7 +214,7 @@ function StepInfo({
     const ratio = img.width / img.height;
     const ok1x1 = Math.abs(ratio - 1) < 0.08;
     const ok916 = Math.abs(ratio - 9 / 16) < 0.06;
-    if (!ok1x1 && !ok916) setWarn("提示:海报不是 1:1 也不是 9:16,feed 缩略图会从中心裁切");
+    if (!ok1x1 && !ok916) setWarn("Note: poster is not 1:1 or 9:16; the feed thumbnail will center-crop.");
 
     setUploading(true);
     const supabase = createClient();
@@ -222,7 +222,7 @@ function StepInfo({
     const { error } = await supabase.storage.from("event-assets").upload(path, file);
     setUploading(false);
     if (error) {
-      setWarn("上传失败:" + error.message);
+      setWarn("Upload failed: " + error.message);
       return;
     }
     const { data } = supabase.storage.from("event-assets").getPublicUrl(path);
@@ -251,7 +251,7 @@ function StepInfo({
         />
       </div>
       <div className="field">
-        <label>Genre (optional · 用于产品端口味匹配)</label>
+        <label>Genre (optional · used for product taste matching)</label>
         <select value={ev.genre ?? ""} onChange={(e) => set("genre", e.target.value || null)}>
           <option value="">— none —</option>
           {GENRES.map((g) => (
@@ -262,7 +262,7 @@ function StepInfo({
         </select>
       </div>
       <div className="field">
-        <label>Poster * (1:1 或 9:16 竖版)</label>
+        <label>Poster * (1:1 or 9:16 portrait)</label>
         <div className="poster-box">
           <div className="poster-prev">
             {ev.poster_url ? (
@@ -281,10 +281,10 @@ function StepInfo({
               onChange={(e) => e.target.files?.[0] && onPoster(e.target.files[0])}
             />
             <div className="hint">
-              预览框 = feed 方形缩略图的裁切效果。详情页按原比例展示。
+              Preview = square feed thumbnail crop. Detail page shows full ratio.
             </div>
             {warn && (
-              <div className="hint" style={{ color: "#e0a060" }}>
+              <div className="hint" style={{ color: "var(--warn)" }}>
                 {warn}
               </div>
             )}
@@ -306,7 +306,7 @@ function StepDate({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => void })
             checked={!!ev.date_tbd}
             onChange={(e) => set("date_tbd", e.target.checked)}
           />
-          日期待定(TBD)——先发布攒 RSVP,日期锁定后再开售
+          Date TBD — publish to gather RSVPs, open sales once the date is locked
         </label>
       </div>
       {!ev.date_tbd && (
@@ -354,7 +354,7 @@ function StepLocation({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => voi
     setGeoMsg(null);
     const r = await geocodeAddress(`${ev[COL_VENUE] ?? ""} ${ev.address ?? ""}`.trim());
     setChecking(false);
-    setGeoMsg(r.ok ? `✓ 坐标解析成功 (${r.lat.toFixed(4)}, ${r.lng.toFixed(4)})——发布时自动入坐标体系` : "✗ " + r.error);
+    setGeoMsg(r.ok ? `✓ Coordinates resolved (${r.lat.toFixed(4)}, ${r.lng.toFixed(4)}) — added to the coordinate system on publish` : "✗ " + r.error);
   }
 
   const lt = ev.location_type ?? "physical";
@@ -365,7 +365,7 @@ function StepLocation({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => voi
           <div key={t} className={"choice " + (lt === t ? "on" : "")} onClick={() => set("location_type", t)}>
             <div className="c-t">{t.toUpperCase()}</div>
             <div className="c-d">
-              {t === "physical" ? "实体场地,进城市筛选" : t === "online" ? "线上,只住 R◉SELECTED 货架" : "待定,只住货架"}
+              {t === "physical" ? "Physical venue, enters city filtering" : t === "online" ? "Online, lives only on the R◉SELECTED shelf" : "TBD, shelf only"}
             </div>
           </div>
         ))}
@@ -389,13 +389,13 @@ function StepLocation({ ev, set }: { ev: Ev; set: (k: string, v: unknown) => voi
               placeholder="4061 W Pico Blvd, Los Angeles, CA 90019"
               onChange={(e) => set("address", e.target.value || null)}
             />
-            <div className="hint">发布时自动 geocode 成坐标,进产品端的城市筛选和 swipe 池</div>
+            <div className="hint">Auto-geocoded on publish into coordinates for city filtering and the swipe pool</div>
           </div>
           <button className="btn btn-sm" onClick={testGeocode} disabled={checking || !ev.address}>
             {checking ? "CHECKING…" : "TEST GEOCODE"}
           </button>
           {geoMsg && (
-            <div className="hint" style={{ marginTop: 8, color: geoMsg.startsWith("✓") ? "#39FF14" : "#e07070" }}>
+            <div className="hint" style={{ marginTop: 8, color: geoMsg.startsWith("✓") ? "var(--accent)" : "var(--danger)" }}>
               {geoMsg}
             </div>
           )}
@@ -453,7 +453,7 @@ function StepDetails({
           {b.type === "p" ? (
             <textarea
               value={b.text}
-              placeholder="写点什么…"
+              placeholder="Write something…"
               onChange={(e) => {
                 const next = [...blocks];
                 next[i] = { type: "p", text: e.target.value };
@@ -486,7 +486,7 @@ function StepDetails({
         </label>
       </div>
       <p className="hint small muted" style={{ marginTop: 12 }}>
-        只支持图片,不支持视频(已定)。
+        Images only, no video (by design).
       </p>
     </div>
   );

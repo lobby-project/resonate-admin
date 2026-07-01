@@ -45,7 +45,7 @@ function RsvpPanel({ event }: { event: any }) {
   return (
     <div>
       <div className="field" style={{ maxWidth: 320 }}>
-        <label>RSVP capacity (空 = 不限)</label>
+        <label>RSVP capacity (empty = unlimited)</label>
         <input type="number" value={cap} min={1} onChange={(e) => setCap(e.target.value)} />
       </div>
       <button
@@ -73,13 +73,13 @@ function TiersPanel({ event, tiers }: { event: any; tiers: any[] }) {
 
   function save() {
     if (!editing) return;
-    if (!editing.name.trim()) return setErr("票名必填");
+    if (!editing.name.trim()) return setErr("Ticket name is required");
     if (editing.pricing_method === "fixed" && (editing.price_cents == null || editing.price_cents <= 0))
-      return setErr("Fixed 票要有价格");
+      return setErr("Fixed-price tickets need a price");
     setErr(null);
     start(async () => {
       const r = await upsertTier(event.id, { ...editing, sort_order: editing.sort_order ?? tiers.length });
-      if (!r.ok) return setErr(r.error ?? "保存失败");
+      if (!r.ok) return setErr(r.error ?? "Save failed");
       setEditing(null);
       router.refresh();
     });
@@ -130,8 +130,8 @@ function TiersPanel({ event, tiers }: { event: any; tiers: any[] }) {
               <span>
                 {t.pricing_method === "free" ? "FREE" : t.pricing_method === "pwyw" ? `PWYW(min ${$(t.min_price_cents ?? 0)})` : $(t.price_cents)}
               </span>
-              <span>{t.quantity_total == null ? "不限量" : `${t.quantity_sold}/${t.quantity_total} 已售`}</span>
-              {t.sale_ends_at && <span>停售 {new Date(t.sale_ends_at).toLocaleString()}</span>}
+              <span>{t.quantity_total == null ? "Unlimited" : `${t.quantity_sold}/${t.quantity_total} sold`}</span>
+              {t.sale_ends_at && <span>Ends {new Date(t.sale_ends_at).toLocaleString()}</span>}
             </div>
           </div>
         )
@@ -141,11 +141,11 @@ function TiersPanel({ event, tiers }: { event: any; tiers: any[] }) {
       )}
       {!editing && (
         <button className="btn" onClick={() => setEditing({ ...EMPTY_TIER, sort_order: tiers.length })}>
-          + ADD TIER
+          + Add Tier
         </button>
       )}
       <p className="hint small muted" style={{ marginTop: 12 }}>
-        早鸟票 = 一个设了停售时间的票档。嘉宾/内部票 = 一个 HIDDEN 票档 + 专属折扣码。
+        Early bird = a tier with a sale end time. Guest/comp = a HIDDEN tier + a dedicated discount code.
       </p>
     </div>
   );
@@ -180,8 +180,8 @@ function TierForm({
         </div>
       </div>
       <div className="field">
-        <label>Description (optional · 显示在购票页)</label>
-        <input type="text" value={tier.description ?? ""} placeholder="含后台通行 + 免费饮品" onChange={(e) => s("description", e.target.value || null)} />
+        <label>Description (optional · shown on checkout)</label>
+        <input type="text" value={tier.description ?? ""} placeholder="Includes backstage access + free drink" onChange={(e) => s("description", e.target.value || null)} />
       </div>
       <div className="row3">
         {tier.pricing_method === "fixed" && (
@@ -196,7 +196,7 @@ function TierForm({
         )}
         {tier.pricing_method === "pwyw" && (
           <div className="field">
-            <label>Min price (USD · 可0)</label>
+            <label>Min price (USD · can be 0)</label>
             <input
               type="number" min={0} step={0.01}
               value={tier.min_price_cents == null ? "" : tier.min_price_cents / 100}
@@ -205,7 +205,7 @@ function TierForm({
           </div>
         )}
         <div className="field">
-          <label>Quantity (空=不限)</label>
+          <label>Quantity (empty = unlimited)</label>
           <input
             type="number" min={1}
             value={tier.quantity_total ?? ""}
@@ -222,16 +222,16 @@ function TierForm({
       </div>
       <div className="row2">
         <div className="field">
-          <label>Sale starts (空=立即)</label>
+          <label>Sale starts (empty = immediately)</label>
           <input type="datetime-local" value={toLocal(tier.sale_starts_at)} onChange={(e) => s("sale_starts_at", fromLocal(e.target.value))} />
         </div>
         <div className="field">
-          <label>Sale ends (空=随活动 · 早鸟在这设截止)</label>
+          <label>Sale ends (empty = with event · set early-bird cutoff here)</label>
           <input type="datetime-local" value={toLocal(tier.sale_ends_at)} onChange={(e) => s("sale_ends_at", fromLocal(e.target.value))} />
         </div>
       </div>
       <div className="field">
-        <label>Ticket note (印在电子票底部)</label>
+        <label>Ticket note (printed on the ticket)</label>
         <textarea value={tier.ticket_note ?? ""} onChange={(e) => s("ticket_note", e.target.value || null)} />
       </div>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>

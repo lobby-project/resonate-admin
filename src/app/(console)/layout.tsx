@@ -29,13 +29,13 @@ export default async function ConsoleLayout({
           <div className="side-logo">res<span className="o">◉</span>nate</div>
           <div className="side-sub">TICKETING CONSOLE</div>
           <div className="err">
-            这个账号（{user.email}）没有管理台权限。
+            This account ({user.email}) does not have console access.
             <br />
-            如果你是团队成员，请联系管理员在数据库里为你开通 is_admin。
+            If you are a team member, ask an admin to enable is_admin for you in the database.
           </div>
           <form action="/auth/signout" method="post">
             <button className="btn" style={{ width: "100%" }}>
-              SIGN OUT
+              Sign Out
             </button>
           </form>
         </div>
@@ -54,7 +54,7 @@ export default async function ConsoleLayout({
         <div className="side-foot">
           <div style={{ marginBottom: 8 }}>{row.display_name || user.email}</div>
           <form action="/auth/signout" method="post">
-            <button>SIGN OUT →</button>
+            <button>Sign Out →</button>
           </form>
         </div>
       </aside>

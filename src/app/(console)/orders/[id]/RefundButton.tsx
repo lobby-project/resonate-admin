@@ -17,14 +17,14 @@ export default function RefundButton({ orderId, total }: { orderId: string; tota
         <button className="btn-danger" onClick={() => setArm(true)}>REFUND {total}…</button>
       ) : (
         <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
-          <span className="small muted">整单退 {total} 回原卡,票作废、库存回补。确认?</span>
+          <span className="small muted">Refund the full {total} to the original card. Tickets will be voided and inventory restored. Confirm?</span>
           <button
             className="btn-danger"
             disabled={pending}
             onClick={() =>
               start(async () => {
                 const r = await refundOrder(orderId);
-                if (!r.ok) return setErr(r.error ?? "退款失败");
+                if (!r.ok) return setErr(r.error ?? "Refund failed");
                 router.refresh();
               })
             }

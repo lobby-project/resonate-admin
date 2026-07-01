@@ -20,14 +20,14 @@ export default async function EventSettingsSection({
     <div>
       <div className="panel" style={{ marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <div className="small muted" style={{ letterSpacing: ".14em", marginBottom: 6 }}>基本信息</div>
-          <div className="small muted">标题 · 海报 · 日期 · 地点 · 详情 —— 在创建向导里编辑</div>
+          <div className="small muted" style={{ letterSpacing: ".14em", marginBottom: 6 }}>Basic Info</div>
+          <div className="small muted">Title · Poster · Date · Location · Details — edit in the create flow</div>
         </div>
-        <Link href={`/events/${id}/edit`} className="btn">编辑基本信息 →</Link>
+        <Link href={`/events/${id}/edit`} className="btn">Edit Basic Info →</Link>
       </div>
 
       <div className="panel" style={{ marginBottom: 18 }}>
-        <StepSettings event={ev} heading="费用 & 结账设置" />
+        <StepSettings event={ev} heading="Fees & Checkout" />
       </div>
 
       {ev.status !== "canceled" ? (
@@ -37,7 +37,7 @@ export default async function EventSettingsSection({
         </div>
       ) : (
         <p className="small muted">
-          活动已取消,售卖已关闭。退款请到 ORDERS 里逐单执行(钱的事一单一单确认)。
+          This event is canceled and sales are closed. Process refunds one by one in Orders.
         </p>
       )}
     </div>

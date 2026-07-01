@@ -47,7 +47,7 @@ export default async function OrdersPage({
     <div>
       <div className="page-h">
         <h1>
-          ORDERS <span className="small muted">({list.length}{sp.event ? " · 本场" : ""} · paid 合计 {$(totalPaid)})</span>
+          ORDERS <span className="small muted">({list.length}{sp.event ? " · this event" : ""} · paid total {$(totalPaid)})</span>
         </h1>
         <a href={csvHref} className="btn">EXPORT CSV ↓</a>
       </div>
@@ -69,8 +69,8 @@ export default async function OrdersPage({
             type="text"
             name="q"
             defaultValue={sp.q ?? ""}
-            placeholder="搜入场姓名…"
-            style={{ background: "#0b0b0b", border: "1px solid var(--border)", borderRadius: 6, color: "#fff", fontFamily: "inherit", fontSize: 12, padding: "8px 10px" }}
+            placeholder="Search attendee name…"
+            style={{ background: "var(--panel-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", color: "var(--text)", fontFamily: "inherit", fontSize: 12, padding: "8px 10px" }}
           />
           <button className="btn btn-sm">SEARCH</button>
         </form>
@@ -90,7 +90,7 @@ export default async function OrdersPage({
           <tbody>
             {list.length === 0 && (
               <tr>
-                <td colSpan={5} className="muted small">没有符合条件的订单</td>
+                <td colSpan={5} className="muted small">No matching orders</td>
               </tr>
             )}
             {list.map((o) => (
@@ -105,7 +105,7 @@ export default async function OrdersPage({
                   {new Date(o.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                 </td>
                 <td>
-                  <span className={"badge " + (o.status === "paid" ? "live" : "")}>{o.status.toUpperCase()}</span>
+                  <span className={"pill " + o.status}>{o.status.toUpperCase()}</span>
                 </td>
                 <td style={{ textAlign: "right" }}>{$(o.total_cents)}</td>
               </tr>

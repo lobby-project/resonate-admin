@@ -33,18 +33,18 @@ export default async function EventTicketsSection({
           <div className="small muted" style={{ letterSpacing: ".14em", marginBottom: 14 }}>
             TICKET SALES
           </div>
-          {list.length === 0 && <div className="small muted">还没有票档 —— 在下面添加</div>}
+          {list.length === 0 && <div className="small muted">No tickets yet — add below</div>}
           {list.map((t: any) => {
             const pct = t.quantity_total ? Math.min(100, Math.round((t.quantity_sold / t.quantity_total) * 100)) : null;
             return (
               <div key={t.id} style={{ marginBottom: 14 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ color: "#fff", fontSize: 13 }}>
+                  <span style={{ color: "var(--text)", fontSize: 13 }}>
                     {t.name}
                     {!t.is_visible && <span className="badge draft" style={{ marginLeft: 8 }}>HIDDEN</span>}
                   </span>
                   <span className="small muted">
-                    {t.quantity_total == null ? `${t.quantity_sold} 已售 · 不限量` : `${t.quantity_sold}/${t.quantity_total}`}
+                    {t.quantity_total == null ? `${t.quantity_sold} sold · unlimited` : `${t.quantity_sold}/${t.quantity_total}`}
                   </span>
                 </div>
                 {pct != null && (
@@ -60,7 +60,7 @@ export default async function EventTicketsSection({
 
       <div className="panel">
         <div className="small muted" style={{ letterSpacing: ".14em", marginBottom: 16 }}>
-          {isRsvp ? "RSVP 设置" : "管理票档"}
+          {isRsvp ? "RSVP Settings" : "Manage Tickets"}
         </div>
         <TicketManager event={ev} tiers={list} />
       </div>

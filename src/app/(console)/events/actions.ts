@@ -78,13 +78,13 @@ export async function saveEvent(eventId: string, patch: Record<string, unknown>)
 export async function geocodeAddress(address: string) {
   await requireAdmin();
   const key = process.env.GOOGLE_GEOCODING_API_KEY;
-  if (!key) return { ok: false as const, error: "GOOGLE_GEOCODING_API_KEY 未配置" };
+  if (!key) return { ok: false as const, error: "GOOGLE_GEOCODING_API_KEY not configured" };
   const res = await fetch(
     `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${key}`
   );
   const json = await res.json();
   const loc = json?.results?.[0]?.geometry?.location;
-  if (!loc) return { ok: false as const, error: "地址没有解析出坐标,检查拼写" };
+  if (!loc) return { ok: false as const, error: "Address did not resolve to coordinates — check spelling" };
   return { ok: true as const, lat: loc.lat as number, lng: loc.lng as number };
 }
 
@@ -98,16 +98,16 @@ export async function publishEvent(eventId: string) {
     .eq("id", eventId)
     .eq("is_owned", true)
     .single();
-  if (loadErr || !ev) return { ok: false, errors: ["活动不存在"] };
+  if (loadErr || !ev) return { ok: false, errors: ["Event not found"] };
 
   const errors: string[] = [];
   const title = ev[COL_TITLE];
-  if (!title || title === "UNTITLED EVENT") errors.push("INFO:标题还没填");
-  if (!ev.poster_url) errors.push("INFO:海报必传(1:1 或 9:16)");
+  if (!title || title === "UNTITLED EVENT") errors.push("INFO: Title is required");
+  if (!ev.poster_url) errors.push("INFO: Poster required (1:1 or 9:16)");
   if (!ev.date_tbd && (!ev.event_date || ev.event_date === TBD_DATE_SENTINEL))
-    errors.push("DATE&TIME:不是 TBD 就必须有开始时间");
-  if (ev.location_type === "physical" && !ev.address) errors.push("LOCATION:实体活动要有地址");
-  if (ev.location_type === "online" && !ev.online_url) errors.push("LOCATION:线上活动要有链接");
+    errors.push("DATE & TIME: Start time required unless TBD");
+  if (ev.location_type === "physical" && !ev.address) errors.push("LOCATION: Physical events need an address");
+  if (ev.location_type === "online" && !ev.online_url) errors.push("LOCATION: Online events need a link");
 
   if (ev.event_type === "ticketed") {
     const { count } = await svc
@@ -115,7 +115,7 @@ export async function publishEvent(eventId: string) {
       .select("id", { count: "exact", head: true })
       .eq("event_id", eventId)
       .eq("is_active", true);
-    if (!count) errors.push("TICKETS:至少要有一个票档(RSVP 活动请回第一步改类型)");
+    if (!count) errors.push("TICKETS: Add at least one ticket tier (or change type to RSVP)");
   }
 
   // 实体地址 → 自动 geocode 进坐标体系(已有坐标就不重复打)
@@ -127,7 +127,7 @@ export async function publishEvent(eventId: string) {
         .update({ [COL_LAT]: g.lat, [COL_LNG]: g.lng })
         .eq("id", eventId);
     } else {
-      errors.push(`LOCATION:坐标解析失败(${g.error})`);
+      errors.push(`LOCATION: Geocoding failed (${g.error})`);
     }
   }
 

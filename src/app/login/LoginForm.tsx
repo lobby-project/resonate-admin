@@ -36,7 +36,7 @@ export default function LoginForm() {
         {busy ? "REDIRECTING…" : "SIGN IN WITH GOOGLE"}
       </button>
       <p className="small muted" style={{ marginTop: 14, textAlign: "center", lineHeight: 1.6 }}>
-        只有 is_admin 账号能进入控制台。
+        Only is_admin accounts can access the console.
       </p>
     </div>
   );

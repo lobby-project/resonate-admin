@@ -19,7 +19,7 @@ export default function CancelButton({ eventId }: { eventId: string }) {
     );
   return (
     <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
-      <span className="small muted">确认取消?将停售并邮件通知所有持票人</span>
+      <span className="small muted">Cancel this event? Sales stop and all ticket holders are emailed.</span>
       <button
         className="btn-danger"
         disabled={pending}
@@ -27,7 +27,7 @@ export default function CancelButton({ eventId }: { eventId: string }) {
           start(async () => {
             const r = await cancelEvent(eventId);
             if (!r.ok) return setMsg("✗ " + r.error);
-            setMsg(`✓ 已取消,通知了 ${r.notified}/${r.holders} 位持票人`);
+            setMsg(`✓ Canceled — notified ${r.notified}/${r.holders} ticket holders`);
             router.refresh();
           })
         }
